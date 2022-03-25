@@ -17,8 +17,8 @@ def get_info() -> dict:
     """
     return {
         "apiversion": "1",
-        "author": "Noah",  # TODO: Your Battlesnake Username
-        "color": "#188888",  # TODO: Personalize
+        "author": "Noah Woodin",
+        "color": "#188888",
         "head": "default",  # TODO: Personalize
         "tail": "default",  # TODO: Personalize
     }
@@ -54,9 +54,8 @@ def choose_move(data: dict) -> str:
 
     # TODO: Step 1 - Don't hit walls.
     # Use information from `data` and `my_head` to not move beyond the game board.
-    # board = data['board']
-    # board_height = ?
-    # board_width = ?
+    board = data['board']
+    possible_moves = _avoid_my_neck(my_head, board, possible_moves)
 
     # TODO: Step 2 - Don't hit yourself.
     # Use information from `my_body` to avoid moves that would collide with yourself.
@@ -96,6 +95,30 @@ def _avoid_my_neck(my_body: dict, possible_moves: List[str]) -> List[str]:
     elif my_neck["y"] < my_head["y"]:  # my neck is below my head
         possible_moves.remove("down")
     elif my_neck["y"] > my_head["y"]:  # my neck is above my head
+        possible_moves.remove("up")
+
+    return possible_moves
+
+
+def _avoid_walls(my_head: dict, board: dict, possible_moves: List[str]) -> List[str]:
+    """
+    my_head: the coordinates corresponding to the head of the snake
+    board: board object documented at https://docs.battlesnake.com/references/api#board
+    possible_moves: List of strings. Moves to pick from.
+            e.g. ["up", "down", "left", "right"]
+
+    return: The list of remaining possible_moves, with the 'neck' direction removed
+    """
+    board_height = board["height"]
+    board_width = board["width"]
+
+    if 0 == my_head["x"]:  # Wall to the left
+        possible_moves.remove("left")
+    elif board_width == my_head["x"]:  # Wall to the right
+        possible_moves.remove("right")
+    elif board_height == my_head["y"]:  # Wall below
+        possible_moves.remove("down")
+    elif 0 == my_head["y"]:  # Wall above
         possible_moves.remove("up")
 
     return possible_moves
