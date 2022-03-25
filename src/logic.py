@@ -114,9 +114,9 @@ def _avoid_walls(my_head: dict, board: dict, possible_moves: List[str]) -> List[
 
     if 0 == my_head["x"]:  # Wall to the left
         possible_moves.remove("left")
-    elif board_width == my_head["x"]:  # Wall to the right
+    elif board_width-1 == my_head["x"]:  # Wall to the right
         possible_moves.remove("right")
-    if board_height == my_head["y"]:  # Wall below
+    if board_height-1 == my_head["y"]:  # Wall below
         possible_moves.remove("down")
     elif 0 == my_head["y"]:  # Wall above
         possible_moves.remove("up")
