@@ -92,7 +92,7 @@ def _avoid_my_neck(my_body: dict, possible_moves: List[str]) -> List[str]:
         possible_moves.remove("left")
     elif my_neck["x"] > my_head["x"]:  # my neck is right of my head
         possible_moves.remove("right")
-    elif my_neck["y"] < my_head["y"]:  # my neck is below my head
+    if my_neck["y"] < my_head["y"]:  # my neck is below my head
         possible_moves.remove("down")
     elif my_neck["y"] > my_head["y"]:  # my neck is above my head
         possible_moves.remove("up")
