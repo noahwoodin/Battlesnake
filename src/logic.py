@@ -90,11 +90,11 @@ def _avoid_my_neck(my_body: dict, possible_moves: List[str]) -> List[str]:
 
     if my_neck["x"] < my_head["x"]:  # my neck is left of my head
         possible_moves.remove("left")
-    elif my_neck["x"] > my_head["x"]:  # my neck is right of my head
+    if my_neck["x"] > my_head["x"]:  # my neck is right of my head
         possible_moves.remove("right")
     if my_neck["y"] < my_head["y"]:  # my neck is below my head
         possible_moves.remove("down")
-    elif my_neck["y"] > my_head["y"]:  # my neck is above my head
+    if my_neck["y"] > my_head["y"]:  # my neck is above my head
         possible_moves.remove("up")
 
     return possible_moves
@@ -116,7 +116,7 @@ def _avoid_walls(my_head: dict, board: dict, possible_moves: List[str]) -> List[
         possible_moves.remove("left")
     elif board_width == my_head["x"]:  # Wall to the right
         possible_moves.remove("right")
-    elif board_height == my_head["y"]:  # Wall below
+    if board_height == my_head["y"]:  # Wall below
         possible_moves.remove("down")
     elif 0 == my_head["y"]:  # Wall above
         possible_moves.remove("up")
