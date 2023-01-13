@@ -66,9 +66,9 @@ def move(game_state: typing.Dict) -> typing.Dict:
         is_move_safe["left"] = False
     elif my_head["x"] == board_width - 1:
         is_move_safe["right"] = False
-    elif my_head["y"] == 0:
-        is_move_safe["up"] = False
     elif my_head["y"] == board_height - 1:
+        is_move_safe["up"] = False
+    elif my_head["y"] == 0:
         is_move_safe["down"] = False
 
     # check if next move will take snake to position on its own body or another snake
@@ -77,9 +77,9 @@ def move(game_state: typing.Dict) -> typing.Dict:
     if (my_head["x"]-1, my_head["y"]) in my_body or (my_head["x"]-1, my_head["y"]) in opponents_body:
         is_move_safe["left"] = False
     if (my_head["x"], my_head["y"]+1) in my_body or (my_head["x"], my_head["y"]+1) in opponents_body:
-        is_move_safe["down"] = False
-    if (my_head["x"], my_head["y"]-1) in my_body or (my_head["x"], my_head["y"]-1) in opponents_body:
         is_move_safe["up"] = False
+    if (my_head["x"], my_head["y"]-1) in my_body or (my_head["x"], my_head["y"]-1) in opponents_body:
+        is_move_safe["down"] = False
 
     # Are there any safe moves left?
     safe_moves = []
