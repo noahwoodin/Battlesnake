@@ -43,34 +43,43 @@ def end(game_state: typing.Dict):
 # Valid moves are "up", "down", "left", or "right"
 # See https://docs.battlesnake.com/api/example-move for available data
 def move(game_state: typing.Dict) -> typing.Dict:
-
     is_move_safe = {"up": True, "down": True, "left": True, "right": True}
 
-    # We've included code to prevent your Battlesnake from moving backwards
-    my_head = game_state["you"]["body"][0]  # Coordinates of your head
-    my_neck = game_state["you"]["body"][1]  # Coordinates of your "neck"
+    my_head = game_state["you"]["body"][0]
+    my_neck = game_state["you"]["body"][1]
+    board_width = game_state['board']['width']
+    board_height = game_state['board']['height']
+    my_body = set((part["x"], part["y"]) for part in game_state['you']['body'])
+    opponents_body = set((part["x"], part["y"]) for opponent in game_state['board']['snakes'] for part in opponent['body'])
 
-    if my_neck["x"] < my_head["x"]:  # Neck is left of head, don't move left
+    if my_neck["x"] < my_head["x"]:
         is_move_safe["left"] = False
-
-    elif my_neck["x"] > my_head["x"]:  # Neck is right of head, don't move right
+    elif my_neck["x"] > my_head["x"]:
         is_move_safe["right"] = False
-
-    elif my_neck["y"] < my_head["y"]:  # Neck is below head, don't move down
+    elif my_neck["y"] < my_head["y"]:
         is_move_safe["down"] = False
-
-    elif my_neck["y"] > my_head["y"]:  # Neck is above head, don't move up
+    elif my_neck["y"] > my_head["y"]:
         is_move_safe["up"] = False
 
-    # TODO: Step 1 - Prevent your Battlesnake from moving out of bounds
-    # board_width = game_state['board']['width']
-    # board_height = game_state['board']['height']
+    # check if next move will take snake out of bounds
+    if my_head["x"] == 0:
+        is_move_safe["left"] = False
+    elif my_head["x"] == board_width - 1:
+        is_move_safe["right"] = False
+    elif my_head["y"] == 0:
+        is_move_safe["up"] = False
+    elif my_head["y"] == board_height - 1:
+        is_move_safe["down"] = False
 
-    # TODO: Step 2 - Prevent your Battlesnake from colliding with itself
-    # my_body = game_state['you']['body']
-
-    # TODO: Step 3 - Prevent your Battlesnake from colliding with other Battlesnakes
-    # opponents = game_state['board']['snakes']
+    # check if next move will take snake to position on its own body or another snake
+    if (my_head["x"]+1, my_head["y"]) in my_body or (my_head["x"]+1, my_head["y"]) in opponents_body:
+        is_move_safe["right"] = False
+    if (my_head["x"]-1, my_head["y"]) in my_body or (my_head["x"]-1, my_head["y"]) in opponents_body:
+        is_move_safe["left"] = False
+    if (my_head["x"], my_head["y"]+1) in my_body or (my_head["x"], my_head["y"]+1) in opponents_body:
+        is_move_safe["down"] = False
+    if (my_head["x"], my_head["y"]-1) in my_body or (my_head["x"], my_head["y"]-1) in opponents_body:
+        is_move_safe["up"] = False
 
     # Are there any safe moves left?
     safe_moves = []
