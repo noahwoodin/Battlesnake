@@ -13,6 +13,8 @@
 import random
 import typing
 
+MAX_MINIMAX_DEPTH = 5
+
 
 # info is called when you create your Battlesnake on play.battlesnake.com
 # and controls your Battlesnake's appearance
@@ -39,19 +41,8 @@ def end(game_state: typing.Dict):
     print("GAME OVER\n")
 
 
-# move is called on every turn and returns your next move
-# Valid moves are "up", "down", "left", or "right"
-# See https://docs.battlesnake.com/api/example-move for available data
-def move(game_state: typing.Dict) -> typing.Dict:
+def get_safe_moves(my_head, my_neck, board_width, board_height, my_body, opponents_body):
     is_move_safe = {"up": True, "down": True, "left": True, "right": True}
-
-    my_head = game_state["you"]["body"][0]
-    my_neck = game_state["you"]["body"][1]
-    board_width = game_state['board']['width']
-    board_height = game_state['board']['height']
-    my_body = set((part["x"], part["y"]) for part in game_state['you']['body'])
-    opponents_body = set((part["x"], part["y"]) for opponent in game_state['board']['snakes'] for part in opponent['body'])
-
     if my_neck["x"] < my_head["x"]:
         is_move_safe["left"] = False
     elif my_neck["x"] > my_head["x"]:
@@ -64,22 +55,33 @@ def move(game_state: typing.Dict) -> typing.Dict:
     # check if next move will take snake out of bounds
     if my_head["x"] == 0:
         is_move_safe["left"] = False
-    elif my_head["x"] == board_width - 1:
+    if my_head["x"] == board_width - 1:
         is_move_safe["right"] = False
-    elif my_head["y"] == board_height - 1:
+    if my_head["y"] == board_height - 1:
         is_move_safe["up"] = False
-    elif my_head["y"] == 0:
+    if my_head["y"] == 0:
         is_move_safe["down"] = False
 
     # check if next move will take snake to position on its own body or another snake
-    if (my_head["x"]+1, my_head["y"]) in my_body or (my_head["x"]+1, my_head["y"]) in opponents_body:
+    if (my_head["x"]+1, my_head["y"]) in my_body:
         is_move_safe["right"] = False
-    if (my_head["x"]-1, my_head["y"]) in my_body or (my_head["x"]-1, my_head["y"]) in opponents_body:
+    if (my_head["x"]-1, my_head["y"]) in my_body:
         is_move_safe["left"] = False
-    if (my_head["x"], my_head["y"]+1) in my_body or (my_head["x"], my_head["y"]+1) in opponents_body:
+    if (my_head["x"], my_head["y"]+1) in my_body:
         is_move_safe["up"] = False
-    if (my_head["x"], my_head["y"]-1) in my_body or (my_head["x"], my_head["y"]-1) in opponents_body:
+    if (my_head["x"], my_head["y"]-1) in my_body:
         is_move_safe["down"] = False
+
+    if opponents_body is not None:
+        # check if next move will take snake to position on its own body or another snake
+        if (my_head["x"] + 1, my_head["y"]) in opponents_body:
+            is_move_safe["right"] = False
+        if (my_head["x"] - 1, my_head["y"]) in opponents_body:
+            is_move_safe["left"] = False
+        if (my_head["x"], my_head["y"] + 1) in opponents_body:
+            is_move_safe["up"] = False
+        if (my_head["x"], my_head["y"] - 1) in opponents_body:
+            is_move_safe["down"] = False
 
     # Are there any safe moves left?
     safe_moves = []
@@ -87,12 +89,85 @@ def move(game_state: typing.Dict) -> typing.Dict:
         if isSafe:
             safe_moves.append(move)
 
+    return safe_moves
+
+
+def update_board_state(move, head, body):
+    # body.pop() # ToDo: Need to account for when food is eaten
+    if move == "up":
+        new_head = {"x": head["x"], "y": head["y"]+1}
+    if move == "down":
+        new_head = {"x": head["x"], "y": head["y"]-1}
+    if move == "left":
+        new_head = {"x": head["x"]-1, "y": head["y"]}
+    if move == "right":
+        new_head = {"x": head["x"]+1, "y": head["y"]}
+    body.add((new_head["x"], new_head["y"]))
+    return new_head, body
+
+
+def minimax(depth, player, my_head, my_neck, board_width, board_height, my_body, opponents_body, opponents_head,
+            opponents_neck):
+    if depth == MAX_MINIMAX_DEPTH:  # Might always want to end on the best score for "me" not worst for "opponent"?
+        return 0
+
+    if player == "me":
+        best_score = float('-inf')
+        safe_moves = get_safe_moves(my_head, my_neck, board_width, board_height, my_body, opponents_body)
+        for move in safe_moves:
+            # ToDo: Get new board state for this move
+            my_head, my_body = update_board_state(move, my_head, my_body)
+            score = minimax(depth+1, "opponent", my_head, my_neck, board_width, board_height, my_body, opponents_body,
+                            opponents_head, opponents_neck)
+            best_score = max(best_score, score)
+        return best_score
+
+    elif player == "opponent":
+        best_score = float('inf')
+        safe_moves = get_safe_moves(opponents_head, opponents_neck, board_width, board_height, opponents_body, my_body)
+        for move in safe_moves:
+            # ToDo: Get new board state for this move
+            opponents_head, opponents_body = update_board_state(move, opponents_head, opponents_body)
+            score = minimax(depth+1, "me", my_head, my_neck, board_width, board_height, my_body, opponents_body,
+                            opponents_head, opponents_neck)
+            best_score = min(best_score, score)
+        return best_score
+
+
+# move is called on every turn and returns your next move
+# Valid moves are "up", "down", "left", or "right"
+# See https://docs.battlesnake.com/api/example-move for available data
+def move(game_state: typing.Dict) -> typing.Dict:
+    my_head = game_state["you"]["body"][0]
+    my_neck = game_state["you"]["body"][1]
+    board_width = game_state['board']['width']
+    board_height = game_state['board']['height']
+    my_body = set((part["x"], part["y"]) for part in game_state['you']['body'])
+    opponents_body = set((part["x"], part["y"]) for opponent in game_state['board']['snakes'] for part in opponent['body'])  # Currently just one opponent
+    opponents_head = game_state['board']['snakes'][0]['body'][0]
+    opponents_neck = game_state['board']['snakes'][0]['body'][1]
+
+    # Minimax from ChatGPT
+    best_move = None
+    best_score = float('-inf')
+    safe_moves = get_safe_moves(my_head, my_neck, board_width, board_height, my_body, opponents_body)
+    for move in safe_moves:
+        # ToDo: Get new board state for this move
+        my_head, my_body = update_board_state(move, my_head, my_body)
+        score = minimax(0, "opponent", my_head, my_neck, board_width, board_height, my_body, opponents_body,
+                        opponents_head, opponents_neck)
+        if score >= best_score:
+            best_score = score
+            best_move = move
+
+
+
     if len(safe_moves) == 0:
         print(f"MOVE {game_state['turn']}: No safe moves detected! Moving down")
         return {"move": "down"}
 
     # Choose a random move from the safe ones
-    next_move = random.choice(safe_moves)
+    next_move = best_move
 
     # TODO: Step 4 - Move towards food instead of random, to regain health and survive longer
     # food = game_state['board']['food']
