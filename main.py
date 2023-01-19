@@ -102,6 +102,7 @@ def update_board_state(move, head, body, body_lst):
         new_head = {"x": head["x"]-1, "y": head["y"]}
     if move == "right":
         new_head = {"x": head["x"]+1, "y": head["y"]}
+    body_lst = [new_head] + body_lst
     body.add((new_head["x"], new_head["y"]))
     body.remove(tail)
     return new_head, body, body_lst
