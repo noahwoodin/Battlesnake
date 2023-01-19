@@ -95,15 +95,15 @@ def get_safe_moves(my_head, my_neck, board_width, board_height, my_body, opponen
 def update_board_state(move, head, body, body_lst):
     tail = body_lst.pop()  # ToDo: Need to account for when food is eaten
     if move == "up":
-        new_head = {"x": head["x"], "y": head["y"]+1}
+        new_head = (head["x"], head["y"]+1)
     if move == "down":
-        new_head = {"x": head["x"], "y": head["y"]-1}
+        new_head = (head["x"], head["y"]-1)
     if move == "left":
-        new_head = {"x": head["x"]-1, "y": head["y"]}
+        new_head = (head["x"]-1, head["y"])
     if move == "right":
-        new_head = {"x": head["x"]+1, "y": head["y"]}
+        new_head = (head["x"]+1, head["y"])
     body_lst = [new_head] + body_lst
-    body.add((new_head["x"], new_head["y"]))
+    body.add(new_head)
     body.remove(tail)
     return new_head, body, body_lst
 
