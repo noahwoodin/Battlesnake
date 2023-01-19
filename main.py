@@ -92,8 +92,8 @@ def get_safe_moves(my_head, my_neck, board_width, board_height, my_body, opponen
     return safe_moves
 
 
-def update_board_state(move, head, body):
-    # body.pop() # ToDo: Need to account for when food is eaten
+def update_board_state(move, head, body, body_lst):
+    tail = body_lst.pop()  # ToDo: Need to account for when food is eaten
     if move == "up":
         new_head = {"x": head["x"], "y": head["y"]+1}
     if move == "down":
@@ -103,11 +103,12 @@ def update_board_state(move, head, body):
     if move == "right":
         new_head = {"x": head["x"]+1, "y": head["y"]}
     body.add((new_head["x"], new_head["y"]))
-    return new_head, body
+    body.remove(tail)
+    return new_head, body, body_lst
 
 
-def minimax(depth, player, my_head, my_neck, board_width, board_height, my_body, opponents_body, opponents_head,
-            opponents_neck):
+def minimax(depth, player, my_head, my_neck, board_width, board_height, my_body, my_body_lst, opponents_body,
+            opponents_body_lst, opponents_head, opponents_neck):
     if depth == MAX_MINIMAX_DEPTH:  # Might always want to end on the best score for "me" not worst for "opponent"?
         return 0
 
@@ -116,9 +117,9 @@ def minimax(depth, player, my_head, my_neck, board_width, board_height, my_body,
         safe_moves = get_safe_moves(my_head, my_neck, board_width, board_height, my_body, opponents_body)
         for move in safe_moves:
             # ToDo: Get new board state for this move
-            my_head, my_body = update_board_state(move, my_head, my_body)
-            score = minimax(depth+1, "opponent", my_head, my_neck, board_width, board_height, my_body, opponents_body,
-                            opponents_head, opponents_neck)
+            my_head, my_body, my_body_lst = update_board_state(move, my_head, my_body, my_body_lst)
+            score = minimax(depth+1, "opponent", my_head, my_neck, board_width, board_height, my_body, my_body_lst,
+                            opponents_body, opponents_body_lst, opponents_head, opponents_neck)
             best_score = max(best_score, score)
         return best_score
 
@@ -127,9 +128,10 @@ def minimax(depth, player, my_head, my_neck, board_width, board_height, my_body,
         safe_moves = get_safe_moves(opponents_head, opponents_neck, board_width, board_height, opponents_body, my_body)
         for move in safe_moves:
             # ToDo: Get new board state for this move
-            opponents_head, opponents_body = update_board_state(move, opponents_head, opponents_body)
-            score = minimax(depth+1, "me", my_head, my_neck, board_width, board_height, my_body, opponents_body,
-                            opponents_head, opponents_neck)
+            opponents_head, opponents_body, opponents_body_lst = update_board_state(move, opponents_head,
+                                                                                    opponents_body, opponents_body_lst)
+            score = minimax(depth+1, "me", my_head, my_neck, board_width, board_height, my_body, my_body_lst,
+                            opponents_body,opponents_body_lst, opponents_head, opponents_neck)
             best_score = min(best_score, score)
         return best_score
 
@@ -143,7 +145,9 @@ def move(game_state: typing.Dict) -> typing.Dict:
     board_width = game_state['board']['width']
     board_height = game_state['board']['height']
     my_body = set((part["x"], part["y"]) for part in game_state['you']['body'])
+    my_body_lst = [(part["x"], part["y"]) for part in game_state['you']['body']]
     opponents_body = set((part["x"], part["y"]) for opponent in game_state['board']['snakes'] for part in opponent['body'])  # Currently just one opponent
+    opponents_body_lst = [(part["x"], part["y"]) for opponent in game_state['board']['snakes'] for part in opponent['body']]
     opponents_head = game_state['board']['snakes'][0]['body'][0]
     opponents_neck = game_state['board']['snakes'][0]['body'][1]
 
@@ -153,14 +157,12 @@ def move(game_state: typing.Dict) -> typing.Dict:
     safe_moves = get_safe_moves(my_head, my_neck, board_width, board_height, my_body, opponents_body)
     for move in safe_moves:
         # ToDo: Get new board state for this move
-        my_head, my_body = update_board_state(move, my_head, my_body)
-        score = minimax(0, "opponent", my_head, my_neck, board_width, board_height, my_body, opponents_body,
-                        opponents_head, opponents_neck)
+        my_head, my_body, my_body_lst = update_board_state(move, my_head, my_body, my_body_lst)
+        score = minimax(0, "opponent", my_head, my_neck, board_width, board_height, my_body, my_body_lst,
+                        opponents_body, opponents_body_lst, opponents_head, opponents_neck)
         if score >= best_score:
             best_score = score
             best_move = move
-
-
 
     if len(safe_moves) == 0:
         print(f"MOVE {game_state['turn']}: No safe moves detected! Moving down")
