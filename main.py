@@ -13,7 +13,7 @@
 import random
 import typing
 
-MAX_MINIMAX_DEPTH = 5
+MAX_MINIMAX_DEPTH = 30
 
 
 # info is called when you create your Battlesnake on play.battlesnake.com
